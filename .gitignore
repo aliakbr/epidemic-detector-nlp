@@ -1,4 +1,4 @@
-.csv
-.txt
-flue_annotations
-.zip
+*.csv
+*.txt
+flue_annotations/
+*.zip

@@ -48,7 +48,12 @@ for tweet_id in all_tweets_id:
     try:
         status = api.get_status(tweet_id)
     except:
-        print ("Tweet {} can't be retrieved".format(tweet_id))
         continue
-    print (status.text)
     all_tweets_status.append(status.text)
+
+# Save Tweet
+df = pd.DataFrame()
+df['id'] = np.asarray(all_tweets_id)
+df['tweet'] = np.asarray(all_tweets_status)
+df['class'] = np.asarray(all_tweets_class)
+df.to_csv('dataset.csv')
