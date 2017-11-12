@@ -5,6 +5,7 @@ Created on Mon Nov  6 23:28:50 2017
 @author: Ali-pc
 """
 import os
+import sys
 import numpy as np
 import pandas as pd
 
@@ -22,11 +23,9 @@ def get_tweets(root_dir, keyword):
                 all_tweets_class.append(value[1])
     return all_tweets_id, all_tweets_class
 
-
-
 # get tweets from file
 root_dir = 'flu_annotations'
-keyword = 'related'
+keyword = sys.argv[1]
 all_tweets_id, all_tweets_class = get_tweets(root_dir, keyword)
 
 # get tweets
@@ -42,7 +41,7 @@ api = tweepy.API(auth)
 
 all_tweets_status = []
 count = 0
-limit = 10000
+limit = 100000
 print('Count of tweets:', len(all_tweets_id))
 for tweet_id in all_tweets_id:
     try:
@@ -60,4 +59,4 @@ df = pd.DataFrame()
 df['id'] = all_tweets_id[:count]
 df['tweet'] = all_tweets_status[:count]
 df['class'] = all_tweets_class[:count]
-df.to_csv(filename)
+df.to_csv(filename, encoding='utf-8')
