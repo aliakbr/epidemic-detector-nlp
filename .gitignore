@@ -4,3 +4,5 @@
 flue_annotations/
 *.DS_Store
 *.npy
+*.sav
+
