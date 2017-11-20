@@ -1,8 +1,8 @@
 *.csv
 !dataset_*.csv
 *.txt
-flue_annotations/
 *.DS_Store
 *.npy
 *.sav
-
+*.pkl
+__pycache__
