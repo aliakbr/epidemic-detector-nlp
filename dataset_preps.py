@@ -8,7 +8,9 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-
+import collections
+import tweepy
+import time
 
 def get_tweets(root_dir, keyword):
     all_tweets_id = []
@@ -29,7 +31,7 @@ keyword = sys.argv[1]
 all_tweets_id, all_tweets_class = get_tweets(root_dir, keyword)
 
 # get tweets
-import tweepy
+
 CONSUMER_KEY = 'YkzeiWTXY8kWpjpKa0kPrTYYd'
 CONSUMER_SECRET = 'pp102MEm5nsGni6qJzuSaloAMjWiBMVhC5IbyilffLCkZN0rT9'
 ACCESS_TOKEN = '2574387926-bwfPiD9PwR1DLbcZaCnqfCdyRZJbbhPlpEFsax2'
@@ -41,17 +43,21 @@ api = tweepy.API(auth)
 
 all_tweets_status = []
 count = 0
-limit = 100000
+limit = min(100000, len(all_tweets_id))
 print('Count of tweets:', len(all_tweets_id))
-for tweet_id in all_tweets_id:
+while count < limit:
+    tweet_id = all_tweets_id[count]
     try:
         status = api.get_status(tweet_id)
         all_tweets_status.append(status.text)
+        count += 1
+    except tweepy.error.RateLimitError:
+        print('Rate limited, waiting...')
+        time.sleep(60)
     except:
         all_tweets_status.append('')
-    count += 1
+        count += 1
     print(count)
-    if count == limit: break
 
 # Save Tweet
 filename = 'dataset_'+keyword+'.csv'
