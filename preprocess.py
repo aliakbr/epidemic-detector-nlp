@@ -1,4 +1,4 @@
-import re
+import re, string
 
 regex_str = [
     r'<[^>]+>', # HTML tags
@@ -27,5 +27,10 @@ def preprocess(s):
     tokens = (token for token in tokens if not html_regex.match(token))
     tokens = ('@user' if mention_regex.match(token) else token for token in tokens)
     tokens = ('!url' if url_regex.match(token) else token for token in tokens)
-    tokens = ('!hashtag' if hashtag_regex.match(token) else token for token in tokens)
     return ' '.join(t for t in tokens if t).replace('rt @user : ','')
+
+def remove_punc(s):
+    exclude = set(string.punctuation)
+    s = ''.join(ch for ch in s if ch not in exclude)
+    return s
+    
