@@ -1,5 +1,6 @@
 import re, string
 from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords
 
 regex_str = [
     r'<[^>]+>', # HTML tags
@@ -39,4 +40,9 @@ def lemmatize(s):
     wordnet_lemmatizer = WordNetLemmatizer()
     s = ' '.join(wordnet_lemmatizer.lemmatize(x) for x in s.split())
     s = ' '.join(wordnet_lemmatizer.lemmatize(x, pos='v') for x in s.split())
+    return s
+
+def remove_stopwords(s):
+    stop = set(stopwords.words('english'))
+    s = ' '.join(x for x in s.split() if x not in stop)
     return s
