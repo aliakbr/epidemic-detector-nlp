@@ -1,4 +1,6 @@
-import re
+import re, string
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords
 
 regex_str = [
     r'<[^>]+>', # HTML tags
@@ -27,5 +29,20 @@ def preprocess(s):
     tokens = (token for token in tokens if not html_regex.match(token))
     tokens = ('@user' if mention_regex.match(token) else token for token in tokens)
     tokens = ('!url' if url_regex.match(token) else token for token in tokens)
-    tokens = ('!hashtag' if hashtag_regex.match(token) else token for token in tokens)
     return ' '.join(t for t in tokens if t).replace('rt @user : ','')
+
+def remove_punc(s):
+    exclude = set(string.punctuation)
+    s = ''.join(ch for ch in s if ch not in exclude)
+    return s
+    
+def lemmatize(s):
+    wordnet_lemmatizer = WordNetLemmatizer()
+    s = ' '.join(wordnet_lemmatizer.lemmatize(x) for x in s.split())
+    s = ' '.join(wordnet_lemmatizer.lemmatize(x, pos='v') for x in s.split())
+    return s
+
+def remove_stopwords(s):
+    stop = set(stopwords.words('english'))
+    s = ' '.join(x for x in s.split() if x not in stop)
+    return s
