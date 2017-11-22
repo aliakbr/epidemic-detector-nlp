@@ -9,96 +9,68 @@ Created on Sat Nov 18 15:43:22 2017
 import os
 import numpy as np
 import time
-from collections import Counter
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import confusion_matrix
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.neural_network import MLPClassifier
-from nltk.corpus import stopwords
-stop_words = set(stopwords.words('english'))
+from preprocess import preprocess, tokenize
+import pickle
+
+FILE_NAME = 'dataset_related.csv'
+
+def clean(s):
+    s = preprocess(s)
+    tokenize_s = tokenize(s)
+    for item in tokenize_s:
+        if not item.isalpha():
+            tokenize_s.remove(item)
+        elif len(item) == 1:
+            tokenize_s.remove(item)
+    return ' '.join(tokenize_s)
+
+# Extract feature testing with TfIdfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 import pandas as pd
 
-FILE_NAME = 'dataset_self.csv'
-    
-def get_words(filename):
-    dataset = pd.read_csv(FILE_NAME)
-    dataset = dataset.dropna(axis=0)
-    list_text = list(dataset['tweet'])
-    list_label = list(dataset['class'])
-    for id, text in enumerate(list_text):
-        words = text.split(' ')
-        for id1, lab in enumerate(list_label):
-            if id1 == id:
-                label = lab
-                break
-        yield(label, words)
-        
-def make_Dictionary(wordsdata):
-    all_words = []
+# Get dataset
+data_file = pd.read_csv(FILE_NAME, engine='python')
+data_file = data_file.dropna(axis=0)
+data_train = {}
+data = []
+for tweet in list(data_file['tweet']):
+    data.append(clean(tweet))
+data_train['data'] = data
+data_train['target'] = list(data_file['class'])
 
-    for _, words in wordsdata:
-        all_words += words
-            
-    dictionary = Counter(all_words)
-    list_to_remove = list(dictionary.keys())
+# Save vocabulary
+vectorizer = TfidfVectorizer(stop_words='english', max_features=3000)
+X = vectorizer.fit_transform(data_train['data'])
+feature_vocab = vectorizer.vocabulary_
+feature_vocab_file = open('feature_vocab.pkl', 'wb')
 
-    for item in list_to_remove:
-        if not item.isalpha():
-            del dictionary[item]
-        elif len(item) == 1:
-            del dictionary[item]
-        elif item in stop_words:
-            del dictionary[item]
-    dictionary = dictionary.most_common(3000)
+pickle.dump(feature_vocab, feature_vocab_file, pickle.HIGHEST_PROTOCOL)
 
-    return dictionary
-
-
-def build_fastdict(dictionary):
-    res = {}
-    for i, d in enumerate(a for a, b in dictionary):
-        res[d] = i
-    print(res)
-    return res
-
-
-def extract_features(wordsdata):
-    docID = 0
-    features_matrix = np.zeros((33800, 3000))
-    train_labels = np.zeros(33800)
-
-    for class_label, all_words in wordsdata:
-        for words in all_words:
-            if words in fast_dictionary.keys():
-                wordID = fast_dictionary[words]
-                features_matrix[docID, wordID] += 1
-
-        train_labels[docID] = class_label
-        docID = docID + 1
-    return features_matrix, train_labels
-
+# Create dataset split
+labels = data_train['target']
+X_train, X_test, y_train, y_test = train_test_split(X, labels, test_size=0.40)
 
 # Create a dictionary of words with its frequency
-if 'self_features_matrix.npy' not in os.listdir('.'):
-    wordsdata = list(get_words(FILE_NAME))
-    dictionary = make_Dictionary(wordsdata)
-    fast_dictionary = build_fastdict(dictionary)
-    print('dictionary created')
+#from feature_extractor import create_features_matrix
+#if 'self_features_matrix.npy' not in os.listdir('.'):
+#    features_matrix, labels = create_features_matrix(FILE_NAME)
+#    np.save('self_features_matrix.npy', features_matrix)
+#    np.save('self_labels.npy', labels)
+#else:
+#    features_matrix = np.load('self_features_matrix.npy')
+#    labels = np.load('self_labels.npy')
+#
+#print(features_matrix.shape)
+#print(labels.shape)
+#print(sum(labels == 0), sum(labels == 1))
 
-    features_matrix, labels = extract_features(wordsdata)
-    np.save('self_features_matrix.npy', features_matrix)
-    np.save('self_labels.npy', labels)
-else:
-    features_matrix = np.load('self_features_matrix.npy')
-    labels = np.load('self_labels.npy')
-
-print(features_matrix.shape)
-print(labels.shape)
-print(sum(labels == 0), sum(labels == 1))
-
-X_train, X_test, y_train, y_test = train_test_split(features_matrix, labels, test_size=0.40)
+#X_train, X_test, y_train, y_test = train_test_split(features_matrix, labels, test_size=0.40)
 
 # Training models and its variants
 
@@ -109,7 +81,7 @@ models = [
     ('Multilayer Perceptron', MLPClassifier(hidden_layer_sizes=(5, 5), solver='adam')),
 ]
 
-import pickle
+from sklearn.metrics import f1_score
 for model_name, model in models:
     start = time.perf_counter()
     model.fit(X_train, y_train)
@@ -121,11 +93,15 @@ for model_name, model in models:
     print('Confusion matrix for {}:'.format(model_name))
     print(confusion_matrix(y_test, result))
     print('Accuracy for {}: {}'.format(model_name, model.score(X_test, y_test)))
+    print ('F1 Score for {}: {}'.format(model_name, f1_score(y_test, result)))
     # Save model
-    filename = '{}_model.sav'.format(model_name)
+    filename = '{}_model.pkl'.format(model_name)
     pickle.dump(model, open(filename, 'wb'))
     
     # Load Example
-    # loaded_model = pickle.load(open(filename, 'rb'))
-    # result = loaded_model.score(X_test, Y_test)
+    #loaded_model = pickle.load(open(filename, 'rb'))
+    #vocabulary = pickle.load(open('feature_vocab.pkl', 'rb'))
+    #vectorizer_test = TfidfVectorizer(stop_words='english', max_features=3000, vocabulary=vocabulary)
+    # test_feature = vectorizer_test.fit_transform(['Test'])
+    #result = loaded_model.predict(test_feature)
     # print(result)

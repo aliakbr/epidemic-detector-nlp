@@ -2,6 +2,8 @@ import pandas as pd
 import json
 from os.path import isfile
 from preprocess import preprocess
+import pickle
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 #%%
 tweets_data_fn = 'tweets_raw.pkl'
@@ -45,6 +47,16 @@ finaldatatrn['class'].fillna('0', inplace=True)
 
 finaldatatrn['text'] = finaldatatrn['text'].apply(preprocess)
 datacls['text'] = datacls['text'].apply(preprocess)
+
+# Load model
+model_file_name = 'Support Vector Machine_model.pkl'
+loaded_model = pickle.load(open(model_file_name, 'rb'))
+vocabulary = pickle.load(open('feature_vocab.pkl', 'rb'))
+vectorizer_test = TfidfVectorizer(stop_words='english', max_features=3000, vocabulary=vocabulary)
+string_input = '..................'
+test_input = list(string_input)
+test_feature = vectorizer_test.fit_transform([test_input])
+result = loaded_model.predict(test_feature)
 
 #%%
 
