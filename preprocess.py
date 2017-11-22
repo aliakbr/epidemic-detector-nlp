@@ -1,4 +1,5 @@
 import re, string
+from nltk.stem import WordNetLemmatizer
 
 regex_str = [
     r'<[^>]+>', # HTML tags
@@ -34,3 +35,8 @@ def remove_punc(s):
     s = ''.join(ch for ch in s if ch not in exclude)
     return s
     
+def lemmatize(s):
+    wordnet_lemmatizer = WordNetLemmatizer()
+    s = ' '.join(wordnet_lemmatizer.lemmatize(x) for x in s.split())
+    s = ' '.join(wordnet_lemmatizer.lemmatize(x, pos='v') for x in s.split())
+    return s
