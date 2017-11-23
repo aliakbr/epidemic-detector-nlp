@@ -3,45 +3,38 @@ from __future__ import print_function
 import numpy as np
 from keras.preprocessing import sequence
 from keras.preprocessing.text import Tokenizer
-from keras.layers import Dense, Input, concatenate
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation
 from keras.layers import Embedding
 from keras.layers import LSTM
-from keras.models import Model
 from keras import optimizers
 
 # set parameters:
 max_features = 20000
-maxlen1 = 40
-maxlen2 = 10
+maxlen = 150
 batch_size = 32
 embedding_dims = 50
 filters = 250
 kernel_size = 3
 hidden_dims = 250
-epochs = 5
+epochs = 15
 optimizer = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
-data_train = "train-cleansed.tsv"
-data_test_file = "testing-solusi.tsv"
+data_train = "data_related_extracted/data_related_extracted_preprocess.txt"
 
 print('Loading data...')
-data_y = []
-data_x = []
-with open(data_train, 'r') as f:
+data_x, data_y = [], []
+with open(data_train, 'r', encoding='utf8') as f:
     lines = f.readlines()
-    for line in lines:
-        line = line.split('\t')
-        train_label = line[-1]
-        data_text = (line[2] + "\t" + line[1]).lower()
-        data_x.append(data_text)
-        data_y.append(train_label)
+
+for line in lines:
+    line = line.split('\t')
+    train_text = line[0]
+    train_label = int(line[1])
+    data_x.append(train_text)
+    data_y.append(train_label)
 
 from sklearn.model_selection import train_test_split
 x_train, x_test, y_train, y_test = train_test_split(data_x, data_y, test_size=0.1, random_state=42)
-
-x_train_title = [x.split('\t')[0] for x in x_train]
-x_train_text = [x.split('\t')[1] for x in x_train]
-x_test_title = [x.split('\t')[0] for x in x_test]
-x_test_text = [x.split('\t')[1] for x in x_test]
 
 tk_train = Tokenizer(num_words=max_features)
 tk_train.fit_on_texts(x_train)
@@ -49,104 +42,53 @@ train_dict_len = len(tk_train.word_index)
 print("Train word dict length = %s" % train_dict_len)
 
 print("Converting x_train words to integers..")
-x_train_title_ohv = tk_train.texts_to_sequences(x_train_title)
-x_test_title_ohv = tk_train.texts_to_sequences(x_test_title)
-x_train_text_ohv = tk_train.texts_to_sequences(x_train_text)
-x_test_text_ohv = tk_train.texts_to_sequences(x_test_text)
+x_train_ohv = tk_train.texts_to_sequences(x_train)
+x_test_ohv = tk_train.texts_to_sequences(x_test)
 
 print('Pad sequences (samples x time)')
-x_train_title_ohv = sequence.pad_sequences(x_train_title_ohv, maxlen=maxlen2, truncating='post')
-x_test_title_ohv = sequence.pad_sequences(x_test_title_ohv, maxlen=maxlen2, truncating='post')
-x_train_text_ohv = sequence.pad_sequences(x_train_text_ohv, maxlen=maxlen1, truncating='post')
-x_test_text_ohv = sequence.pad_sequences(x_test_text_ohv, maxlen=maxlen1, truncating='post')
-
-tk_word = Tokenizer()
-tk_word.fit_on_texts(y_train)
-word_dict_len = len(tk_word.word_index)
-print("Word dict length = %s" % word_dict_len)
-
-print("Converting y_train to vector of class..")
-y_train_v = tk_word.texts_to_matrix(y_train)
-y_test_v = tk_word.texts_to_matrix(y_test)
-
-print('Pad sequences (samples y time)')
-y_train_v = sequence.pad_sequences(y_train_v, maxlen=word_dict_len)
-y_test_v = sequence.pad_sequences(y_test_v, maxlen=word_dict_len)
+x_train_ohv = sequence.pad_sequences(x_train_ohv, maxlen=maxlen)
+x_test_ohv = sequence.pad_sequences(x_test_ohv, maxlen=maxlen)
 
 print('Build model...')
-main_input1 = Input(shape=(maxlen1,), dtype='int32', name='main_input1')
+model = Sequential()
 
-x = Embedding(output_dim=512, input_dim=max_features, input_length=maxlen1)(main_input1)
+# we start off with an efficient embedding layer which maps
+# our vocab indices into embedding_dims dimensions
+model.add(Embedding(max_features,
+                    embedding_dims,
+                    input_length=maxlen))
+model.add(Dropout(0.2))
 
-lstm_out1 = LSTM(32, dropout=0.2, recurrent_dropout=0.2)(x)
+# we add a Convolution1D, which will learn filters
+# word group filters of size filter_length:
+model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2))
 
-main_input2 = Input(shape=(maxlen2,), dtype='int32', name='main_input2')
+# We project onto a single unit output layer, and squash it with a sigmoid:
+model.add(Dense(1))
+model.add(Activation('sigmoid'))
 
-y = Embedding(output_dim=64, input_dim=max_features, input_length=maxlen2)(main_input2)
-
-lstm_out2 = LSTM(8, dropout=0.2, recurrent_dropout=0.2)(y)
-
-z = concatenate([lstm_out1, lstm_out2])
-
-z = Dense(64, activation='relu')(z)
-
-main_output = Dense(12, activation='softmax', name='main_output')(z)
-
-model = Model(inputs=[main_input1, main_input2], outputs=[main_output])
-
-model.compile(loss='categorical_crossentropy',
+model.compile(loss='binary_crossentropy',
               optimizer=optimizer,
               metrics=['accuracy'])
-model.fit([x_train_text_ohv, x_train_title_ohv], y_train_v,
+model.fit(x_train_ohv, y_train,
           batch_size=batch_size,
           epochs=epochs,
           validation_split=0.1)
 
 #Predict
-preds = model.predict([x_test_text_ohv, x_test_title_ohv])
+preds = model.predict(x_test_ohv)
+preds_res = preds[:]
+preds_res[preds_res>=0.5] = 1
+preds_res[preds_res<0.5] = 0
 
 #Evaluation
 sum_precision = 0.
-for i, pred in enumerate(preds):
-    pred_idx = np.argsort(pred)
-    if y_test_v[i][pred_idx[-1]]:
+for i in range(len(preds_res)):
+    if (preds_res[i] == y_test[i]):
         sum_precision += 1
         
-print("Accuracy test = {}".format(sum_precision/len(y_test_v)))
+print("Accuracy test = {}".format(sum_precision/len(y_test)))
 
 print("Saving model..")
 
 model.save("lstm-train.hdf5")
-
-#Testing
-data_test = []
-data_test_id = []
-with open(data_test_file, 'r') as f:
-    lines = f.readlines()
-    for line in lines:
-        line = line.split('\t')
-        test_text = (line[2] + "\t" + line[1]).lower()
-        data_test_id.append(line[0])
-        data_test.append(test_text)
-     
-data_test_title = [x.split('\t')[0] for x in data_test]
-data_test_text = [x.split('\t')[1] for x in data_test]
-
-data_test_text_ohv = tk_train.texts_to_sequences(data_test_text)
-data_test_title_ohv = tk_train.texts_to_sequences(data_test_title)
-data_test_text_ohv = sequence.pad_sequences(data_test_text_ohv, maxlen=maxlen1, truncating='post')
-data_test_title_ohv = sequence.pad_sequences(data_test_title_ohv, maxlen=maxlen2, truncating='post')
-
-label_index = {}
-for x in tk_word.word_index:
-	label_index[tk_word.word_index[x]] = x
-print(label_index)
-
-preds_test = model.predict([data_test_text_ohv, data_test_title_ohv])
-
-filename = "out-complex.txt"
-with open(filename, 'w') as f:
-    for id, pred in enumerate(preds_test):
-        print(id)
-        predsort = np.argsort(pred)
-        f.write("{}:{}\n".format(data_test_id[id], label_index[predsort[-1]+1]))

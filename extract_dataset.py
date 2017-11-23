@@ -2,7 +2,7 @@ import preprocess
 import pandas as pd
 
 filename = 'dataset_related.csv'
-output = 'data_related_extracted.txt'
+output = 'data_related_extracted/data_related_extracted_remstop.txt'
 
 df = pd.read_csv(filename)
 df_extract = df.loc[:, ['tweet', 'class']]
@@ -16,6 +16,9 @@ classes = df_extract['class'].values.tolist()
 for i in range(len(tweets)):
     tweets[i] = tweets[i].replace('\n', ' ')
     tweets[i] = preprocess.preprocess(tweets[i])
+    tweets[i] = preprocess.remove_punc(tweets[i])
+    tweets[i] = preprocess.lemmatize(tweets[i])
+    tweets[i] = preprocess.remove_stopwords(tweets[i])
     
 s = []
 for tweet,cl in zip(tweets,classes):
