@@ -33,8 +33,8 @@ for line in lines:
     data_x.append(train_text)
     data_y.append(train_label)
 
-from sklearn.model_selection import train_test_split
-x_train, x_test, y_train, y_test = train_test_split(data_x, data_y, test_size=0.1, random_state=42)
+x_train, x_test = data_x[:-400], data_x[-400:]
+y_train, y_test = data_y[:-400], data_y[-400:]
 
 tk_train = Tokenizer(num_words=max_features)
 tk_train.fit_on_texts(x_train)
