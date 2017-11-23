@@ -108,12 +108,15 @@ class StdOutListener(tweepy.StreamListener):
 
                 ref = db.reference('flumap')
                 ref.push({
+                    'username': decoded['user']['screen_name'],
+                    'text': decoded['text'],
                     'lat': c[1],
                     'lng': c[0]
                 })
 
                 print("{} {} {}: {}".format(cm, decoded['created_at'], decoded['user']['name'], decoded['text']).encode('ascii', errors='ignore'))
-            print("nc {} {}: {}".format(decoded['created_at'], decoded['user']['name'], decoded['text']).encode('ascii', errors='ignore'))
+            else:
+                print("nc {} {}: {}".format(decoded['created_at'], decoded['user']['name'], decoded['text']).encode('ascii', errors='ignore'))
 
         self.logfile.write('{} - {} - {} - {}\n'.format(prediction_rate, sent, decoded['id_str'], decoded['text']))
 
@@ -129,4 +132,5 @@ if __name__ == '__main__':
         auth.set_access_token(access_token, access_token_secret)
 
         stream = tweepy.Stream(auth, l)
+        print('Starting listener...')
         stream.filter(languages=["en"], track=['flu', 'influenza'])
