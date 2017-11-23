@@ -5,4 +5,6 @@
 *.npy
 *.sav
 *.pkl
+*.h5
+*.7z
 __pycache__

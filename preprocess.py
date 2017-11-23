@@ -24,6 +24,9 @@ def tokenize(s):
     return tokens_re.findall(s)
 
 def preprocess(s):
+    s = remove_punc(s)
+    s = remove_stopwords(s)
+    s = lemmatize(s)
     tokens = tokenize(s)
     tokens = (token.lower() for token in tokens)
     tokens = (token for token in tokens if not html_regex.match(token))
@@ -36,7 +39,7 @@ def remove_punc(s):
     s = ''.join(ch for ch in s if ch not in exclude)
     s = ' '.join(x for x in s.split())
     return s
-    
+
 def lemmatize(s):
     wordnet_lemmatizer = WordNetLemmatizer()
     s = ' '.join(wordnet_lemmatizer.lemmatize(x) for x in s.split())
