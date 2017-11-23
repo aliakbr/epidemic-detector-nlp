@@ -11,13 +11,13 @@ from keras import optimizers
 
 # set parameters:
 max_features = 20000
-maxlen = 150
+maxlen = 30
 batch_size = 32
 embedding_dims = 50
 filters = 250
 kernel_size = 3
-hidden_dims = 250
-epochs = 15
+hidden_dims = 100
+epochs = 10
 optimizer = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 data_train = "data_related_extracted/data_related_extracted_preprocess.txt"
 
