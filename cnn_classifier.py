@@ -11,7 +11,7 @@ from keras import optimizers
 
 # set parameters:
 max_features = 20000
-maxlen = 150
+maxlen = 30
 batch_size = 32
 embedding_dims = 50
 filters = 250
