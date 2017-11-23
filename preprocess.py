@@ -34,6 +34,7 @@ def preprocess(s):
 def remove_punc(s):
     exclude = set(string.punctuation)
     s = ''.join(ch for ch in s if ch not in exclude)
+    s = ' '.join(x for x in s.split())
     return s
     
 def lemmatize(s):
