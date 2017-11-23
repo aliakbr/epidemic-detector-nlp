@@ -34,8 +34,8 @@ for line in lines:
     data_x.append(train_text)
     data_y.append(train_label)
 
-x_train, x_test = data_x[:-400], data_x[-400:]
-y_train, y_test = data_y[:-400], data_y[-400:]
+from sklearn.model_selection import train_test_split
+x_train, x_test, y_train, y_test = train_test_split(data_x, data_y, test_size=0.1, random_state=42)
 
 # Building char dictionary from x_train
 tk_char = Tokenizer(filters='', char_level=True)
@@ -112,4 +112,4 @@ print("Accuracy test = {}".format(sum_precision/len(y_test)))
 
 print("Saving model..")
     
-model.save("cnn-train.hdf5")
+model.save("cnn-train-char.hdf5")

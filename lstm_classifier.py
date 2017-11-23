@@ -38,20 +38,9 @@ for line in lines:
     data_x.append(train_text)
     data_y.append(train_label)
 
-x_train, x_test = data_x[:-400], data_x[-400:]
-y_train, y_test = data_y[:-400], data_y[-400:]
-# df = pd.read_pickle('tweets_training.pkl')
-# x_train, x_test, y_train, y_test = train_test_split(df['text'].as_matrix(), df['class'].astype(int).as_matrix(), test_size=0.2, random_state=421337)
-clsd = pd.read_pickle('tweets_to_classify.pkl')
-x_cls = clsd['text'].as_matrix()
-
 #%%
-
-for t in x_train:
-    if type(t) == float:
-        print(t)
-
-#%%
+from sklearn.model_selection import train_test_split
+x_train, x_test, y_train, y_test = train_test_split(data_x, data_y, test_size=0.1, random_state=42)
 
 tk_train = Tokenizer(num_words=max_features)
 tk_train.fit_on_texts(x_train)

@@ -6,7 +6,7 @@ from keras.preprocessing.text import Tokenizer
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.layers import Embedding
-from keras.layers import Conv1D, GlobalMaxPooling1D
+from keras.layers import LSTM
 from keras import optimizers
 
 # set parameters:
@@ -16,7 +16,8 @@ batch_size = 32
 embedding_dims = 50
 filters = 250
 kernel_size = 3
-hidden_dims = 250
+hidden_dims = 100
+num_chars = 70
 epochs = 10
 optimizer = optimizers.Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
 data_train = "data_related_extracted/data_related_extracted_preprocess.txt"
@@ -36,7 +37,7 @@ for line in lines:
 from sklearn.model_selection import train_test_split
 x_train, x_test, y_train, y_test = train_test_split(data_x, data_y, test_size=0.1, random_state=42)
 
-tk_train = Tokenizer(num_words=max_features)
+tk_train = Tokenizer(filters='', char_level=True)
 tk_train.fit_on_texts(x_train)
 train_dict_len = len(tk_train.word_index)
 print("Train word dict length = %s" % train_dict_len)
@@ -61,18 +62,7 @@ model.add(Dropout(0.2))
 
 # we add a Convolution1D, which will learn filters
 # word group filters of size filter_length:
-model.add(Conv1D(filters,
-                 kernel_size,
-                 padding='valid',
-                 activation='relu',
-                 strides=1))
-# we use max pooling:
-model.add(GlobalMaxPooling1D())
-
-# We add a vanilla hidden layer:
-model.add(Dense(hidden_dims))
-model.add(Dropout(0.2))
-model.add(Activation('relu'))
+model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2))
 
 # We project onto a single unit output layer, and squash it with a sigmoid:
 model.add(Dense(1))
@@ -101,5 +91,5 @@ for i in range(len(preds_res)):
 print("Accuracy test = {}".format(sum_precision/len(y_test)))
 
 print("Saving model..")
-    
-model.save("cnn-train.hdf5")
+
+model.save("lstm-train-char.hdf5")
