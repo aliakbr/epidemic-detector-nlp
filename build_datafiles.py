@@ -48,8 +48,21 @@ finaldatatrn['class'].fillna('0', inplace=True)
 
 #%%
 
+with open('flu.txt') as rf:
+    dataflu = pd.DataFrame((json.loads(line) for line in rf),
+        columns=['user_id',
+                 'id_str',
+                 'text',
+                 'created_at',
+                 'coordinates',
+                 'place',
+                 'user_location']).set_index('id_str')
+
+#%%
+
 finaldatatrn['text'] = finaldatatrn['text'].progress_apply(preprocess)
 datacls['text'] = datacls['text'].progress_apply(preprocess)
+dataflu['text'] = dataflu['text'].progress_apply(preprocess)
 
 # # Load model
 # model_file_name = 'Support Vector Machine_model.pkl'
@@ -65,3 +78,4 @@ datacls['text'] = datacls['text'].progress_apply(preprocess)
 
 finaldatatrn.reset_index().to_pickle('tweets_training.pkl')
 datacls.reset_index().to_pickle('tweets_to_classify.pkl')
+dataflu.reset_index().to_pickle('tweets_flu.pkl')

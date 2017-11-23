@@ -24,20 +24,21 @@ api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
 # Fetch tweets
 with open('flu.txt', 'ab') as f:
-	for tweet in tweepy.Cursor(api.search, q='flu OR influenze', max_id=max_id, since="2017-09-10", until="2017-10-10", lang="id").items():
+    for tweet in tweepy.Cursor(api.search, q='flu OR influenza', max_id=max_id, since="2011-09-10", until="2017-11-24", lang="en").items():
         #Process a single status
-        print(str(tweet.created_at), tweet.id, tweet.text)
+        tweet = tweet._json
         res = {
-        	'user_id' : decoded['user']['id_str'],
-        	'id_str': decoded['id_str'],
-        	'text': decoded['text'],
-        	'coordinates': decoded['coordinates']
+        	'user_id' : tweet['user']['id_str'],
+        	'id_str': tweet['id_str'],
+        	'text': tweet['text'],
+        	'created_at': tweet['created_at']
         }
-        
-        if decoded['coordinates']: res['coordinates'] = decoded['coordinates']
-        if decoded['place']: res['place'] = decoded['place']
-        if decoded['user']['location']: res['user_location'] = decoded['user']['location']
-        
+        print(res)
+
+        if tweet['coordinates']: res['coordinates'] = tweet['coordinates']
+        if tweet['place']: res['place'] = tweet['place']
+        if tweet['user']['location']: res['user_location'] = tweet['user']['location']
+
         # Also, we convert UTF-8 to ASCII ignoring all bad characters sent by users
-        json.dump(res, self.handle)
+        json.dump(res, f)
         f.write('\n')
