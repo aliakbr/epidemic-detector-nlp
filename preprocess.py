@@ -24,15 +24,16 @@ def tokenize(s):
     return tokens_re.findall(s)
 
 def preprocess(s):
-    s = remove_punc(s)
-    s = remove_stopwords(s)
-    s = lemmatize(s)
     tokens = tokenize(s)
     tokens = (token.lower() for token in tokens)
     tokens = (token for token in tokens if not html_regex.match(token))
     tokens = ('@user' if mention_regex.match(token) else token for token in tokens)
     tokens = ('!url' if url_regex.match(token) else token for token in tokens)
-    return ' '.join(t for t in tokens if t).replace('rt @user : ','')
+    s = ' '.join(t for t in tokens if t).replace('rt @user : ','')
+    s = remove_punc(s)
+    s = remove_stopwords(s)
+    s = lemmatize(s)
+    return s
 
 def remove_punc(s):
     exclude = set(string.punctuation)

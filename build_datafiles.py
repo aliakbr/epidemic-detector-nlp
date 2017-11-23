@@ -63,5 +63,5 @@ datacls['text'] = datacls['text'].progress_apply(preprocess)
 
 #%%
 
-finaldatatrn.reset_index().to_hdf('tweets_training.h5', 'data')
-datacls.reset_index().to_hdf('tweets_to_classify.h5', 'data')
+finaldatatrn.reset_index().to_pickle('tweets_training.pkl')
+datacls.reset_index().to_pickle('tweets_to_classify.pkl')
